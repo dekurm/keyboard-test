@@ -25,7 +25,7 @@ import {
   useGenericKeyboardHandler,
 } from 'react-native-keyboard-controller';
 import {SystemBars} from 'react-native-edge-to-edge';
-
+import {runOnJS} from 'react-native-reanimated';
 import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
 
 type SectionProps = PropsWithChildren<{}>;
@@ -33,31 +33,50 @@ type SectionProps = PropsWithChildren<{}>;
 function Section({children}: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
+  const [data, setData] = React.useState<{
+    name: string;
+    keyboardHeight: number;
+  } | null>(null);
+
   useGenericKeyboardHandler({
-    onStart: () => {
+    onStart: event => {
       'worklet';
 
-      console.log('onStart');
+      runOnJS(setData)({
+        name: 'onStart',
+        keyboardHeight: event.height,
+      });
     },
-    onMove: () => {
+    // onMove: () => {
+    //   'worklet';
+
+    //   setData({
+    //     name: 'onMove',
+    //     keyboardHeight: event.height,
+    //   });
+    // },
+    onEnd: event => {
       'worklet';
 
-      console.log('onMove');
+      runOnJS(setData)({
+        name: 'onEnd',
+        keyboardHeight: event.height,
+      });
     },
-    onEnd: () => {
+    onInteractive: event => {
       'worklet';
 
-      console.log('onEnd');
-    },
-    onInteractive: () => {
-      'worklet';
-
-      console.log('onInteractive');
+      runOnJS(setData)({
+        name: 'onInteractive',
+        keyboardHeight: event.height,
+      });
     },
   });
 
   return (
     <View style={styles.sectionContainer}>
+      <Text>{JSON.stringify(data)}</Text>
+
       <TextInput
         style={styles.textInput}
         placeholder="Enter text to see the keyboard events"
@@ -96,19 +115,25 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
+    <SafeAreaView style={[backgroundStyle, {flex: 1}]}>
       <SystemBars style={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section>Enter text to see the keyboard events</Section>
-        </View>
-      </ScrollView>
+      <Header />
+      <View
+        style={{
+          backgroundColor: isDarkMode ? Colors.black : Colors.white,
+        }}>
+        <Section>Enter text to see the keyboard events</Section>
+      </View>
+      <View
+        style={{
+          height: 100,
+          width: '100%',
+          position: 'absolute',
+          bottom: 0,
+          backgroundColor: 'red',
+        }}>
+        <Text>Bottom 0</Text>
+      </View>
     </SafeAreaView>
   );
 }
